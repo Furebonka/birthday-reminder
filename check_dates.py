@@ -17,7 +17,13 @@ for item in data["dates"]:
 
 if matches:
     token = os.environ["TELEGRAM_BOT_TOKEN"]
-    chat_id = os.environ["TELEGRAM_CHAT_ID"]
+
+    # Разбираем список chat_id из секрета (через запятую)
+    chat_ids = [
+        cid.strip()
+        for cid in os.environ.get("TELEGRAM_CHAT_ID", "").split(",")
+        if cid.strip()
+    ]
 
     if len(matches) == 1:
         text = f"🔔 Сегодня: {matches[0]}"
@@ -25,10 +31,13 @@ if matches:
         text = "🔔 Сегодня важные даты:\n" + "\n".join(f"• {m}" for m in matches)
 
     url = f"https://api.telegram.org/bot{token}/sendMessage"
-    payload = {"chat_id": chat_id, "text": text}
 
-    response = requests.post(url, json=payload)
-    print(f"Отправлено: {text}")
-    print(f"Статус: {response.status_code}")
+    # Отправляем каждому получателю
+    for chat_id in chat_ids:
+        payload = {"chat_id": chat_id, "text": text}
+        response = requests.post(url, json=payload)
+        print(f"[{chat_id}] Отправлено: {text}")
+        print(f"[{chat_id}] Статус: {response.status_code}")
+        print(f"[{chat_id}] Ответ Telegram: {response.text}")
 else:
     print("Сегодня ничего нет.")
